@@ -32,7 +32,7 @@ const deductible = 250;
 const copayPct = 0.1;
 const employerContrib = 0;
 
-const numbers = [...Array(1100).keys()].map((i: number) => i * 100);
+const spendAmts = [...Array(110).keys()].map((i: number) => i * 100);
 const netCostFn = (annualPrem: number, deductible: number, copay: number, employerHSAContrib: number, oopMax: number, taxSavings: number, spent: number) => {
   if (spent < deductible) {
     return Math.min(
@@ -58,10 +58,10 @@ const ppo750Fn = netCostFn.bind(
   null, 313.92, 750, 0.2, 0, 4200, 0);
 
 const hdhpFn = netCostFn.bind(
-  null, 0, 2800, 0.0, 600, 3425, 800);
+  null, 0, 2800, 0.0, 600, 3425, 1000);
 
-const data = {
-  labels: numbers,
+const lineData = {
+  labels: spendAmts,
   datasets: [
     {
       label: 'PPO 250',
@@ -82,7 +82,7 @@ const data = {
       pointHoverBorderWidth: 2,
       pointRadius: 1,
       pointHitRadius: 10,
-      data: numbers.map((v) => ppo250Fn(v))
+      data: spendAmts.map((v) => ppo250Fn(v))
     },
     {
       label: 'PPO 750',
@@ -103,7 +103,7 @@ const data = {
       pointHoverBorderWidth: 2,
       pointRadius: 1,
       pointHitRadius: 10,
-      data: numbers.map((v) => ppo750Fn(v))
+      data: spendAmts.map((v) => ppo750Fn(v))
     },
     {
       label: 'HDHP',
@@ -124,7 +124,7 @@ const data = {
       pointHoverBorderWidth: 2,
       pointRadius: 1,
       pointHitRadius: 10,
-      data: numbers.map((v) => hdhpFn(v))
+      data: spendAmts.map((v) => hdhpFn(v))
     }
   ]
 };
@@ -151,7 +151,7 @@ const LineInst = () => (
     <Chart
       type='line'
       options={lineOptions}
-      data={data}
+      data={lineData}
       width={800}
       height={400}
     />
@@ -161,11 +161,10 @@ const Home: NextPage = () => {
   const [planOptions, setPlanOptions] = useState([{ planType: 'ppo', deductible: 850, yearlyPrem: 600, oopMax: 2000, copay: 10, employerHSAContrib: 0, taxSavings: 0 }])
 
   // handle input change
-  const handleInputChange = (e, index) => {
+  const handleInputChange = (index, e) => {
     const { name, value } = e.target;
-    const list = [...planOptions];
-    list[index][name] = value;
-    setPlanOptions(list);
+    planOptions[index][name] = value;
+    updateLines();
   };
 
   // handle click event of the Remove button
@@ -177,7 +176,21 @@ const Home: NextPage = () => {
 
   // handle click event of the Add button
   const handleAddClick = () => {
-    setPlanOptions([...planOptions, { planType: "ppo", deductible: 0 }]);
+    setPlanOptions([...planOptions, { planType: "ppo"}]);
+  };
+
+  const updateLines = () => {
+    planOptions.forEach((plan, i) => {
+      const {planType, ...rest} = plan;
+      
+      if(Object.values(rest).every((v => !isNaN(v)))) {
+        console.log(rest)
+        calcFn = netCostFn.bind(
+  null, rest.yearlyPrem, rest.deductible, rest.copay, rest.employerHSAContrib, rest.oopMax, rest.taxSavings);
+        spendAmts.map((v) => ppo250Fn(v))
+        lineData.datasets[i].data = rest;
+      }
+    })
   };
 
 
@@ -199,7 +212,7 @@ const Home: NextPage = () => {
         {planOptions.map((x, i) => {
           return PlanOptionInput(x, i, planOptions.length, handleInputChange, handleAddClick, handleRemoveClick);
         })}
-        
+
       </main>
 
       <footer className={styles.footer}>
