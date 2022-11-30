@@ -6,7 +6,6 @@ import styles from '../styles/Home.module.css'
 import { useState } from 'react';
 import PlanOptionInput from '../components/PlanOptionInput.tsx';
 
-
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -27,10 +26,6 @@ ChartJS.register(
   Legend
 );
 
-const prem = 981.24;
-const deductible = 250;
-const copayPct = 0.1;
-const employerContrib = 0;
 
 const spendAmts = [...Array(110).keys()].map((i: number) => i * 100);
 const netCostFn = (annualPrem: number, deductible: number, copay: number, employerHSAContrib: number, oopMax: number, taxSavings: number, spent: number) => {
@@ -51,62 +46,18 @@ const netCostFn = (annualPrem: number, deductible: number, copay: number, employ
   }
 }
 
-const ppo250Fn = netCostFn.bind(
-  null, prem, deductible, copayPct, employerContrib, 2250, 0);
-
-const ppo750Fn = netCostFn.bind(
-  null, 313.92, 750, 0.2, 0, 4200, 0);
-
-const hdhpFn = netCostFn.bind(
-  null, 0, 2800, 0.0, 600, 3425, 1000);
-
 const lineData = {
   labels: spendAmts,
   datasets: [
     {
-      label: 'PPO 250',
-      fill: true,
-      lineTension: 0.1,
-      backgroundColor: 'rgba(75,192,192,0.4)',
-      borderColor: 'rgba(75,192,192,1)',
-      borderCapStyle: 'butt',
-      borderDash: [],
-      borderDashOffset: 0.0,
-      borderJoinStyle: 'miter',
-      pointBorderColor: 'rgba(75,192,192,1)',
-      pointBackgroundColor: '#fff',
-      pointBorderWidth: 1,
-      pointHoverRadius: 5,
-      pointHoverBackgroundColor: 'rgba(75,192,192,1)',
-      pointHoverBorderColor: 'rgba(220,220,220,1)',
-      pointHoverBorderWidth: 2,
-      pointRadius: 1,
-      pointHitRadius: 10,
-      data: spendAmts.map((v) => ppo250Fn(v))
-    },
-    {
-      label: 'PPO 750',
-      fill: true,
-      lineTension: 0.1,
-      backgroundColor: 'rgba(75,75,192,0.4)',
-      borderColor: 'rgba(75,75,192,1)',
-      borderCapStyle: 'butt',
-      borderDash: [],
-      borderDashOffset: 0.0,
-      borderJoinStyle: 'miter',
-      pointBorderColor: 'rgba(75,75,192,1)',
-      pointBackgroundColor: '#fff',
-      pointBorderWidth: 1,
-      pointHoverRadius: 5,
-      pointHoverBackgroundColor: 'rgba(75,75,192,1)',
-      pointHoverBorderColor: 'rgba(220,220,220,1)',
-      pointHoverBorderWidth: 2,
-      pointRadius: 1,
-      pointHitRadius: 10,
-      data: spendAmts.map((v) => ppo750Fn(v))
-    },
-    {
-      label: 'HDHP',
+      ...rawData,
+     label: 'test',
+     data: [100000000000,100000000000000000,3333333333333333,1232341234123]
+    }
+  ]
+};
+
+const rawData = {
       fill: true,
       lineTension: 0.1,
       backgroundColor: 'rgba(80,192,80,0.4)',
@@ -124,10 +75,8 @@ const lineData = {
       pointHoverBorderWidth: 2,
       pointRadius: 1,
       pointHitRadius: 10,
-      data: spendAmts.map((v) => hdhpFn(v))
-    }
-  ]
-};
+}
+
 const lineOptions = {
   scales: {
     y: {
@@ -164,7 +113,7 @@ const Home: NextPage = () => {
   const handleInputChange = (index, e) => {
     const { name, value } = e.target;
     planOptions[index][name] = value;
-    updateLines();
+    updateLines(index);
   };
 
   // handle click event of the Remove button
@@ -179,16 +128,20 @@ const Home: NextPage = () => {
     setPlanOptions([...planOptions, { planType: "ppo"}]);
   };
 
-  const updateLines = () => {
+  const updateLines = (i) => {
     planOptions.forEach((plan, i) => {
       const {planType, ...rest} = plan;
       
       if(Object.values(rest).every((v => !isNaN(v)))) {
-        console.log(rest)
-        calcFn = netCostFn.bind(
+        const calcFn = netCostFn.bind(
   null, rest.yearlyPrem, rest.deductible, rest.copay, rest.employerHSAContrib, rest.oopMax, rest.taxSavings);
-        spendAmts.map((v) => ppo250Fn(v))
-        lineData.datasets[i].data = rest;
+        lineData.datasets[i] = {
+          ...rawData,
+          label: `${planType} ${rest.deductible}`,
+          data: spendAmts.map((v) => calcFn(v))
+        };
+        LineInst
+      console.log(lineData.datasets)  
       }
     })
   };
